@@ -1,88 +1,145 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Minhas Metas 2026</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#f48fb1">
+<meta charset="UTF-8">
+<title>Planner 2026</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #fff;
-      color: #333;
-    }
-    header {
-      background: #f8bbd0;
-      padding: 16px;
-      text-align: center;
-      font-size: 22px;
-      font-weight: bold;
-    }
-    .container {
-      padding: 16px;
-    }
-    input, button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 8px;
-      border-radius: 10px;
-      border: 1px solid #f48fb1;
-      font-size: 16px;
-    }
-    button {
-      background: #f48fb1;
-      color: white;
-      border: none;
-    }
-    .meta {
-      background: #fde4ec;
-      padding: 12px;
-      border-radius: 12px;
-      margin-top: 10px;
-    }
-  </style>
+<style>
+body{margin:0;font-family:Arial;background:#fff;color:#444}
+header{background:#f8bbd0;padding:16px;text-align:center;font-size:22px;font-weight:bold}
+.container{padding:14px}
+.card{background:#fde4ec;padding:12px;border-radius:16px;margin-bottom:14px}
+input,select,button{width:100%;padding:10px;margin-top:6px;border-radius:10px;border:1px solid #f48fb1}
+button{background:#f48fb1;color:#fff;border:none}
+.meta{background:#fff;padding:10px;border-radius:10px;margin-top:6px;display:flex;gap:8px}
+.meta.done{text-decoration:line-through;opacity:.6}
+.progress{height:12px;background:#f3c1d3;border-radius:10px;overflow:hidden}
+.progress div{height:100%;background:#f48fb1}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.day{background:#fff;padding:8px;border-radius:8px;font-size:12px;text-align:center}
+.mark{width:6px;height:6px;background:#f48fb1;border-radius:50%;margin:auto;margin-top:4px}
+</style>
 </head>
-<body>
 
-<header>Minhas Metas 2026</header>
+<body>
+<header>Planner 2026</header>
 
 <div class="container">
-  <input id="metaInput" placeholder="Digite sua meta">
-  <button onclick="adicionar()">Adicionar meta</button>
 
-  <div id="lista"></div>
+<div class="card">
+<h3>➕ Nova Meta</h3>
+<input id="titulo" placeholder="Título da meta">
+<select id="categoria">
+<option>Estudo</option>
+<option>Financeiro</option>
+<option>Pessoal</option>
+<option>Saúde</option>
+<option>Outro</option>
+</select>
+<input type="date" id="data">
+<button onclick="addMeta()">Adicionar</button>
+</div>
+
+<div class="card">
+<h3>📌 Novo Evento</h3>
+<input id="tituloEvento" placeholder="Evento">
+<input type="date" id="dataEvento">
+<button onclick="addEvento()">Adicionar evento</button>
+</div>
+
+<div class="card">
+<h3>📊 Progresso</h3>
+<div class="progress"><div id="barra"></div></div>
+<p id="percentual"></p>
+</div>
+
+<div class="card">
+<h3>🗂️ Metas e Eventos</h3>
+<div id="lista"></div>
+</div>
+
+<div class="card">
+<h3>🗓️ Calendário</h3>
+<div class="calendar" id="calendario"></div>
+</div>
+
 </div>
 
 <script>
-  let metas = JSON.parse(localStorage.getItem("metas")) || [];
+let dados = JSON.parse(localStorage.getItem("planner2026")) || {metas:[],eventos:[]};
 
-  function salvar() {
-    localStorage.setItem("metas", JSON.stringify(metas));
+function salvar(){
+  localStorage.setItem("planner2026",JSON.stringify(dados));
+}
+
+function addMeta(){
+  if(!titulo.value)return;
+  dados.metas.push({
+    titulo:titulo.value,
+    categoria:categoria.value,
+    data:data.value,
+    feita:false
+  });
+  titulo.value=""; data.value="";
+  salvar(); render();
+}
+
+function addEvento(){
+  if(!tituloEvento.value)return;
+  dados.eventos.push({
+    titulo:tituloEvento.value,
+    data:dataEvento.value
+  });
+  tituloEvento.value=""; dataEvento.value="";
+  salvar(); render();
+}
+
+function toggle(i){
+  dados.metas[i].feita=!dados.metas[i].feita;
+  salvar(); render();
+}
+
+function render(){
+  lista.innerHTML="";
+  let feitas=0;
+
+  dados.metas.forEach((m,i)=>{
+    if(m.feita)feitas++;
+    lista.innerHTML+=`
+      <div class="meta ${m.feita?'done':''}">
+        <input type="checkbox" ${m.feita?'checked':''} onclick="toggle(${i})">
+        <div>
+          <b>${m.titulo}</b><br>
+          <small>${m.categoria} • ${m.data||'Sem data'}</small>
+        </div>
+      </div>`;
+  });
+
+  dados.eventos.forEach(e=>{
+    lista.innerHTML+=`
+      <div class="meta">📌 ${e.titulo} • ${e.data}</div>`;
+  });
+
+  let total=dados.metas.length;
+  let p=total?Math.round((feitas/total)*100):0;
+  barra.style.width=p+"%";
+  percentual.innerText=p+"% concluído";
+
+  desenharCalendario();
+}
+
+function desenharCalendario(){
+  calendario.innerHTML="";
+  for(let d=1;d<=31;d++){
+    let tem = dados.metas.concat(dados.eventos)
+      .some(x=>x.data && x.data.endsWith("-"+String(d).padStart(2,"0")));
+    calendario.innerHTML+=`
+      <div class="day">${d}${tem?'<div class="mark"></div>':''}</div>`;
   }
+}
 
-  function adicionar() {
-    const texto = metaInput.value;
-    if (!texto) return;
-    metas.push(texto);
-    salvar();
-    metaInput.value = "";
-    mostrar();
-  }
-
-  function mostrar() {
-    lista.innerHTML = "";
-    metas.forEach(m => {
-      const div = document.createElement("div");
-      div.className = "meta";
-      div.innerText = m;
-      lista.appendChild(div);
-    });
-  }
-
-  mostrar();
+render();
 </script>
 
 </body>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Minhas Metas 2026</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#f48fb1">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #fff;
+      color: #333;
+    }
+    header {
+      background: #f8bbd0;
+      padding: 16px;
+      text-align: center;
+      font-size: 22px;
+      font-weight: bold;
+    }
+    .container {
+      padding: 16px;
+    }
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      border-radius: 10px;
+      border: 1px solid #f48fb1;
+      font-size: 16px;
+    }
+    button {
+      background: #f48fb1;
+      color: white;
+      border: none;
+    }
+    .meta {
+      background: #fde4ec;
+      padding: 12px;
+      border-radius: 12px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<header>Minhas Metas 2026</header>
+
+<div class="container">
+  <input id="metaInput" placeholder="Digite sua meta">
+  <button onclick="adicionar()">Adicionar meta</button>
+
+  <div id="lista"></div>
+</div>
+
+<script>
+  let metas = JSON.parse(localStorage.getItem("metas")) || [];
+
+  function salvar() {
+    localStorage.setItem("metas", JSON.stringify(metas));
+  }
+
+  function adicionar() {
+    const texto = metaInput.value;
+    if (!texto) return;
+    metas.push(texto);
+    salvar();
+    metaInput.value = "";
+    mostrar();
+  }
+
+  function mostrar() {
+    lista.innerHTML = "";
+    metas.forEach(m => {
+      const div = document.createElement("div");
+      div.className = "meta";
+      div.innerText = m;
+      lista.appendChild(div);
+    });
+  }
+
+  mostrar();
+</script>
+
+</body>
+</html>
